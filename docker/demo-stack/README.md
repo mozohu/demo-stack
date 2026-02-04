@@ -9,7 +9,11 @@
 並且採用「HTTP 直出 + 外部集中 reverse proxy 包 HTTPS/WSS」的方式管理憑證。
 
 ## 架構
-每個 demo instance 都是同一個 compose 模板 + 各自一份 env：
+每個 demo instance 都是同一個 compose 模板 + 各自一份 env。
+
+另外有一份集中對照表：
+- `instances/apps.json`：各 app 對應 HID / ports（方便查詢與後續自動化）
+
 
 - `compose.yml`：通用模板
 - `instances/<name>/.env`：此 demo 的對外 ports、image tag、instance 目錄
