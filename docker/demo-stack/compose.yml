@@ -111,8 +111,8 @@ services:
         target: /app/crontab
         read_only: true
       - type: bind
-        source: ${INSTANCE_DIR}/cron/apply_ltms.sh
-        target: /app/apply_ltms.sh
+        source: ${INSTANCE_DIR}/cron/check_restart.sh
+        target: /app/check_restart.sh
         read_only: true
       # 與原本 compose 對齊：LTMS/佈署需要的檔案
       - type: bind
