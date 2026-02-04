@@ -55,6 +55,12 @@ docker compose -f compose.yml --env-file instances/<name>/.env up -d
 ./scripts/stat.sh storer --watch
 ```
 
+### 4.2) 從命令列觸發 ebus event（smock.pl）
+```bash
+./scripts/smock.sh storer 'sess/session_begin'
+./scripts/smock.sh storer 'reader/read' '{"type":"keypad","data":"1234"}'
+```
+
 ### 5) 停止
 ```bash
 ./scripts/down.sh storer
