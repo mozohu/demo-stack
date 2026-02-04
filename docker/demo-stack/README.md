@@ -65,6 +65,12 @@ docker compose -f compose.yml --env-file instances/<name>/.env up -d
 ./scripts/smock.sh storer 'reader/read' '{"type":"keypad","data":"1234"}'
 ```
 
+### 4.3) 手動觸發 LTMS mediasync（在 cron 容器內跑一次）
+```bash
+./scripts/mediasync.sh storer
+./scripts/mediasync.sh retriever
+```
+
 ### 5) 停止
 ```bash
 ./scripts/down.sh storer
