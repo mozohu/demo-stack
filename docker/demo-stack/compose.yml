@@ -1,0 +1,109 @@
+name: ${DEMO_NAME}
+
+services:
+  mq:
+    image: ${MQ_IMAGE:-eclipse-mosquitto:2}
+    restart: unless-stopped
+    ports:
+      - "${MQTT_PORT:-1883}:1883"
+      - "${MQTT_WS_PORT:-9001}:9001"
+    volumes:
+      - type: bind
+        source: ${INSTANCE_DIR}/mq/mosquitto.conf
+        target: /mosquitto/config/mosquitto.conf
+        read_only: true
+      - mq_data:/mosquitto/data
+      - mq_log:/mosquitto/log
+    networks: [appnet]
+
+  smc:
+    image: ${SMC_IMAGE:-mwd-storer-mwd-storer-smc:latest}
+    restart: unless-stopped
+    depends_on:
+      - mq
+    command: ["node", "/usr/local/bin/smc.js"]
+    volumes:
+      - type: bind
+        source: ${INSTANCE_DIR}/smc/smc_config.js
+        target: /etc/smc_config.js
+        read_only: true
+      - db:/opt/svm/rest/db
+    networks: [appnet]
+
+  mw:
+    image: ${MW_IMAGE:-mwd-storer-mwd-storer-mw:latest}
+    restart: unless-stopped
+    depends_on:
+      - smc
+    volumes:
+      - type: bind
+        source: ${INSTANCE_DIR}/smc/smc_config.js
+        target: /etc/smc_config.js
+        read_only: true
+      - log:/var/lib/ivm/log
+      - db:/opt/svm/rest/db
+    tmpfs:
+      - /tmp/tmpfs:size=64m,mode=1777
+    networks: [appnet]
+
+  rest:
+    image: ${REST_IMAGE:-mwd-storer-mwd-storer-rest:latest}
+    restart: unless-stopped
+    depends_on:
+      - mw
+    ports:
+      - "${REST_PORT:-8080}:80"
+    volumes:
+      - type: bind
+        source: ${INSTANCE_DIR}/smc/smc_config.js
+        target: /etc/smc_config.js
+        read_only: true
+      - log:/var/lib/ivm/log
+      - db:/opt/svm/rest/db
+      - type: bind
+        source: ${INSTANCE_DIR}/rest/nginx-rest.conf
+        target: /etc/nginx/sites-available/default
+        read_only: true
+    networks: [appnet]
+
+  cron:
+    image: ${CRON_IMAGE:-mwd-storer-mwd-storer-cron:latest}
+    restart: unless-stopped
+    depends_on:
+      - mw
+    volumes:
+      - type: bind
+        source: ${INSTANCE_DIR}/smc/smc_config.js
+        target: /etc/smc_config.js
+        read_only: true
+      - type: bind
+        source: ${INSTANCE_DIR}/cron/crontab
+        target: /app/crontab
+        read_only: true
+      - db:/opt/svm/rest/db
+    tmpfs:
+      - /tmp/tmpfs:size=64m,mode=1777
+    networks: [appnet]
+
+  gui:
+    # 建議每個 demo 自己做一個 GUI image（由 deb/tar.gz 產出），用 tag 區分
+    image: ${GUI_IMAGE:-nginx:stable}
+    restart: unless-stopped
+    depends_on:
+      - mw
+    ports:
+      - "${GUI_PORT:-8000}:80"
+    # 若你暫時還是 dist 掛載，可以打開下面兩行（但不符合你希望的「GUI 也 image 化」）
+    # volumes:
+    #   - ${INSTANCE_DIR}/gui/dist:/usr/share/nginx/html:ro
+    networks: [appnet]
+
+networks:
+  appnet:
+    driver: bridge
+
+volumes:
+  db:
+  log:
+  mq_data:
+  mq_log:
