@@ -71,23 +71,23 @@ docker compose -f compose.yml --env-file instances/<name>/.env up -d
 ## Ports（每個 instance 必填）
 每套 demo 的 `.env` 需設定：
 
-- `GUI_PORT`
 - `REST_PORT`
 - `MQTT_PORT`
 - `MQTT_WS_PORT`
 
 對外連線參考：
-- GUI: `http://<host>:${GUI_PORT}/`
 - REST: `http://<host>:${REST_PORT}/app/rest/...`
 - MQTT: `mqtt://<host>:${MQTT_PORT}`
 - MQTT-WS: `ws://<host>:${MQTT_WS_PORT}`
 
-## GUI image
-建議每個 demo 的 GUI 都做成獨立 image（由 deb 或 tar.gz 產出），在 `.env` 內設定：
+## GUI（集中管理，不隨 instance 起容器）
+GUI 是靜態 web app，不在每個 instance 內啟動容器。
 
-- `GUI_IMAGE=<repo>:<tag>`
-
-目前範例暫用 `nginx:stable` 作為占位。
+- 靜態檔放在：`gui/<app>/`（例如 `gui/storer/`, `gui/retriever/`）
+- 用 `frontend/compose.yml` 啟動一個共享 nginx，提供：
+  - `http://<host>:${FRONTEND_PORT}/demo/<app>/`
+  - 並在缺少 query 時自動 302 補上 `ebus` / `rest`：
+    - `?ebus=ws://<host>:<MQTT_WS_PORT>&rest=http://<host>:<REST_PORT>`
 
 ## 外部 HTTPS/WSS（集中管理憑證）
 本 stack 內部以 HTTP/WS 直出；你可以在外部再包一層 reverse proxy（nginx/traefik/caddy）做：

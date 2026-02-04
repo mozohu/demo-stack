@@ -1,0 +1,17 @@
+name: demo-frontend
+
+services:
+  frontend:
+    image: nginx:stable
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8088}:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ../gui:/usr/share/nginx/html/demo:ro
+    networks:
+      - frontend
+
+networks:
+  frontend:
+    driver: bridge
