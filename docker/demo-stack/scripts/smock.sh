@@ -23,7 +23,7 @@ jsonArg="${1:-}"
 
 # 在 mw 容器內執行 smock.pl (symlink to smc_send.pl)
 if [[ -n "$jsonArg" ]]; then
-  docker compose -f compose.yml --env-file "$envfile" exec -T mw bash -lc "smock.pl '$event' '$jsonArg'"
+  docker compose -f compose.yml --env-file "$envfile" exec -T mw bash -lc "smock.pl '$event' '$jsonArg'" 2>&1 | grep -v 'mesg: ttyname failed'
 else
-  docker compose -f compose.yml --env-file "$envfile" exec -T mw bash -lc "smock.pl '$event'"
+  docker compose -f compose.yml --env-file "$envfile" exec -T mw bash -lc "smock.pl '$event'" 2>&1 | grep -v 'mesg: ttyname failed'
 fi

@@ -26,4 +26,4 @@ if [[ ${1:-} == "--watch" || ${1:-} == "-c" ]]; then
 fi
 
 # 直接在 mw 容器內執行（需有 /usr/local/bin/stat.pl）
-docker compose -f compose.yml --env-file "$envfile" exec -T mw bash -lc "stat.pl ${watch_flag}" 
+docker compose -f compose.yml --env-file "$envfile" exec -T mw bash -lc "stat.pl ${watch_flag}" 2>&1 | grep -v 'mesg: ttyname failed'
