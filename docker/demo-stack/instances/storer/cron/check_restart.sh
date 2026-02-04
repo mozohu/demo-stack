@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # check_restart.sh
-# - reads mediamgr.pl output from stdin
-# - if changes detected => restart ALL containers in the same docker compose project
+# - reads mediasync.py output from stdin
+# - if changes detected => runs mediamgr.pl (deploy) then restart ALL containers in the same docker compose project
 # - uses Docker Engine API via /var/run/docker.sock
 
 project="${DEMO_NAME:-${COMPOSE_PROJECT_NAME:-}}"
@@ -22,7 +22,10 @@ if grep -q "更沒有異動" "$buf"; then
   exit 0
 fi
 
-echo "check_restart: change detected, restarting all services for project=$project" >&2
+echo "check_restart: change detected, running mediamgr then restarting all services for project=$project" >&2
+
+# Deploy/apply
+/opt/ltms-client/bin/mediamgr.pl || true
 
 # List containers for project and restart in a safe-ish order; restart cron last.
 # services order: mq, smc, mw, rest, gui, cron

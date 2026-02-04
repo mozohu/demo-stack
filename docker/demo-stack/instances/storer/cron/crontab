@@ -3,8 +3,5 @@
 */7 * * * * /opt/app/scripts/test/serverproperty.pl -r
 */8 * * * * /opt/app/scripts/sync_s3.pl
 
-# LTMS download
-*/5 * * * * python3 /opt/ltms-client/bin/mediasync.py
-
-# LTMS deploy (mediamgr) + wrapper decides whether to restart containers
-5 */6 * * * /opt/ltms-client/bin/mediamgr.pl | /bin/bash /app/check_restart.sh
+# LTMS download + wrapper decides deploy/restart based on mediasync output
+*/5 * * * * python3 /opt/ltms-client/bin/mediasync.py | /bin/bash /app/check_restart.sh

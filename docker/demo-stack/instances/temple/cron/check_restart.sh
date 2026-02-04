@@ -15,7 +15,9 @@ if grep -q "更沒有異動" "$buf"; then
   exit 0
 fi
 
-echo "check_restart: change detected, restarting all services for project=$project" >&2
+echo "check_restart: change detected, running mediamgr then restarting all services for project=$project" >&2
+
+/opt/ltms-client/bin/mediamgr.pl || true
 
 python3 - <<'PY'
 import json, os, urllib.parse, subprocess
