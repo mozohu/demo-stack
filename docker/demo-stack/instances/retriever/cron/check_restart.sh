@@ -22,7 +22,7 @@ echo "check_restart: change detected, running mediamgr then restarting all servi
 python3 - <<'PY'
 import json, os, urllib.parse, subprocess
 project=os.environ.get('DEMO_NAME') or os.environ.get('COMPOSE_PROJECT_NAME') or ''
-order=['mq','smc','mw','rest','gui']
+order=['smc','mw']
 filters={'label':[f'com.docker.compose.project={project}']}
 url='http://localhost/containers/json?'+urllib.parse.urlencode({'all':'1','filters': json.dumps(filters)})
 out=subprocess.check_output(['curl','-sS','--unix-socket','/var/run/docker.sock',url])

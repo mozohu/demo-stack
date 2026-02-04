@@ -27,12 +27,11 @@ echo "check_restart: change detected, running mediamgr then restarting all servi
 # Deploy/apply
 /opt/ltms-client/bin/mediamgr.pl || true
 
-# List containers for project and restart in a safe-ish order; DO NOT restart cron.
-# services order: mq, smc, mw, rest, gui
+# Restart only smc -> mw (do not restart mq/rest/gui/cron)
 python3 - <<'PY'
 import json, os, urllib.parse, subprocess
 project=os.environ.get('DEMO_NAME') or os.environ.get('COMPOSE_PROJECT_NAME') or ''
-order=['mq','smc','mw','rest','gui']
+order=['smc','mw']
 
 filters={'label':[f'com.docker.compose.project={project}']}
 url='http://localhost/containers/json?'+urllib.parse.urlencode({'all':'1','filters': json.dumps(filters)})
