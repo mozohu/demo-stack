@@ -40,6 +40,11 @@ services:
         source: ${INSTANCE_DIR}/smc/smc_config.js
         target: /etc/smc_config.js
         read_only: true
+      # 讓 MW 透過 supervisord 啟動 start.pl（圍繞 SMC/ebus event 的 Perl handler）
+      - type: bind
+        source: ${INSTANCE_DIR}/mw/supervisor.conf
+        target: /etc/supervisor/conf.d/app.conf
+        read_only: true
       - log:/var/lib/ivm/log
       - db:/opt/svm/rest/db
     tmpfs:
