@@ -77,6 +77,12 @@ docker compose -f compose.yml --env-file instances/<name>/.env up -d
 ./scripts/get_host.sh retriever
 ```
 
+### 4.5) 在 mw 容器查詢完整設定（get_config.pl）
+```bash
+./scripts/get_config.sh storer
+./scripts/get_config.sh retriever
+```
+
 ### 5) 停止
 ```bash
 ./scripts/down.sh storer
