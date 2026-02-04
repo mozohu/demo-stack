@@ -34,6 +34,9 @@ services:
         target: /etc/smc_config.js
         read_only: true
       - db:/opt/svm/rest/db
+      - ivm_var:/var/lib/ivm
+      - ivm_opt:/opt/ivm
+      - ltms_resource:/opt/ltms-client/resource
     networks: [appnet]
 
   mw:
@@ -56,6 +59,9 @@ services:
         read_only: true
       - log:/var/lib/ivm/log
       - db:/opt/svm/rest/db
+      - ivm_var:/var/lib/ivm
+      - ivm_opt:/opt/ivm
+      - ltms_resource:/opt/ltms-client/resource
     tmpfs:
       - /tmp/tmpfs:size=64m,mode=1777
     networks: [appnet]
@@ -77,6 +83,9 @@ services:
         read_only: true
       - log:/var/lib/ivm/log
       - db:/opt/svm/rest/db
+      - ivm_var:/var/lib/ivm
+      - ivm_opt:/opt/ivm
+      - ltms_resource:/opt/ltms-client/resource
       - type: bind
         source: ${INSTANCE_DIR}/rest/nginx-rest.conf
         target: /etc/nginx/sites-available/default
@@ -100,7 +109,17 @@ services:
         source: ${INSTANCE_DIR}/cron/crontab
         target: /app/crontab
         read_only: true
+      # 與原本 compose 對齊：LTMS/佈署需要的檔案
+      - type: bind
+        source: ${INSTANCE_DIR}/cron/hosts
+        target: /etc/hosts
+      - type: bind
+        source: ${INSTANCE_DIR}/cron/ltms-resource.cs
+        target: /var/lib/ltms-resource.cs
       - db:/opt/svm/rest/db
+      - ivm_var:/var/lib/ivm
+      - ivm_opt:/opt/ivm
+      - ltms_resource:/opt/ltms-client/resource
     tmpfs:
       - /tmp/tmpfs:size=64m,mode=1777
     networks: [appnet]
@@ -130,3 +149,7 @@ volumes:
   log:
   mq_data:
   mq_log:
+  # LTMS 下載與佈署目錄（需要在 cron/mw/rest 之間共享）
+  ivm_var:
+  ivm_opt:
+  ltms_resource:
