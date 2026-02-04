@@ -46,6 +46,15 @@ docker compose -f compose.yml --env-file instances/<name>/.env up -d
 ./scripts/ps.sh retriever
 ```
 
+### 4.1) 檢查 MW 執行狀態（常用：stat.pl）
+```bash
+./scripts/stat.sh storer
+./scripts/stat.sh retriever
+
+# 連續刷新（等同 stat.pl -c）
+./scripts/stat.sh storer --watch
+```
+
 ### 5) 停止
 ```bash
 ./scripts/down.sh storer
