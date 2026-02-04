@@ -71,6 +71,12 @@ docker compose -f compose.yml --env-file instances/<name>/.env up -d
 ./scripts/mediasync.sh retriever
 ```
 
+### 4.4) 在 mw 容器查詢 host 設定（get_host.pl）
+```bash
+./scripts/get_host.sh storer
+./scripts/get_host.sh retriever
+```
+
 ### 5) 停止
 ```bash
 ./scripts/down.sh storer
