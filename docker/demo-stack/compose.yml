@@ -131,22 +131,6 @@ services:
       - /tmp/tmpfs:size=64m,mode=1777
     networks: [appnet]
 
-  gui:
-    # 建議每個 demo 自己做一個 GUI image（由 deb/tar.gz 產出），用 tag 區分
-    image: ${GUI_IMAGE:-nginx:stable}
-    restart: unless-stopped
-    environment:
-      TZ: ${TZ:-Asia/Taipei}
-      hid: ${HID}
-    depends_on:
-      - mw
-    ports:
-      - "${GUI_PORT:-8000}:80"
-    # 若你暫時還是 dist 掛載，可以打開下面兩行（但不符合你希望的「GUI 也 image 化」）
-    # volumes:
-    #   - ${INSTANCE_DIR}/gui/dist:/usr/share/nginx/html:ro
-    networks: [appnet]
-
 networks:
   appnet:
     driver: bridge
