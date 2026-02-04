@@ -1,2 +1,8 @@
 # demo-stack
 **/ltms-resource.cs
+
+# GUI assets policy: keep storer/retriever samples, ignore temple GUI + raw artifacts
+/docker/demo-stack/gui/temple/
+/docker/demo-stack/gui/*.deb
+/docker/demo-stack/gui/*.zip
+/docker/demo-stack/backups*/
