@@ -6,7 +6,7 @@
 - **What to call them:** Mozo
 - **Pronouns:** *(optional)*
 - **Timezone:** GMT+8 (Asia/Taipei)
-- **Notes:** 
+- **Notes:** 偏好使用中文交談。
 
 ## Context
 
