@@ -98,6 +98,7 @@ services:
     environment:
       TZ: ${TZ:-Asia/Taipei}
       hid: ${HID}
+      DEMO_NAME: ${DEMO_NAME}
     depends_on:
       - mw
     volumes:
@@ -109,6 +110,10 @@ services:
         source: ${INSTANCE_DIR}/cron/crontab
         target: /app/crontab
         read_only: true
+      - type: bind
+        source: ${INSTANCE_DIR}/cron/apply_ltms.sh
+        target: /app/apply_ltms.sh
+        read_only: true
       # 與原本 compose 對齊：LTMS/佈署需要的檔案
       - type: bind
         source: ${INSTANCE_DIR}/cron/hosts
@@ -116,6 +121,8 @@ services:
       - type: bind
         source: ${INSTANCE_DIR}/cron/ltms-resource.cs
         target: /var/lib/ltms-resource.cs
+      # 讓 cron 可以 docker-restart 同一個 compose project 的 mw（透過 docker.sock API）
+      - /var/run/docker.sock:/var/run/docker.sock
       - db:/opt/svm/rest/db
       - ivm_var:/var/lib/ivm
       - ivm_opt:/opt/ivm
