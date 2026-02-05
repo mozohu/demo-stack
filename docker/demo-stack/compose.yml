@@ -57,6 +57,11 @@ services:
         source: ${INSTANCE_DIR}/mw/supervisor.conf
         target: /etc/supervisor/conf.d/app.conf
         read_only: true
+      # System/instance overlay config (highest priority in get_config): /root/config.5
+      - type: bind
+        source: ${INSTANCE_DIR}/mw/config.5
+        target: /root/config.5
+        read_only: true
       - log:/var/lib/ivm/log
       - db:/opt/svm/rest/db
       - ivm_var:/var/lib/ivm
@@ -64,7 +69,8 @@ services:
       - ltms_resource:/opt/ltms-client/resource
     tmpfs:
       - /tmp/tmpfs:size=64m,mode=1777
-    networks: [appnet]
+    # MW must join meshnet to resolve cross-instance hostnames (e.g. MASTER_IP=storer).
+    networks: [appnet, meshnet]
 
   rest:
     image: ${REST_IMAGE:-mwd-storer-mwd-storer-rest:latest}
@@ -90,7 +96,8 @@ services:
         source: ${INSTANCE_DIR}/rest/nginx-rest.conf
         target: /etc/nginx/sites-available/default
         read_only: true
-    networks: [appnet]
+    # REST may call other instances; join meshnet for cross-instance DNS.
+    networks: [appnet, meshnet]
 
   cron:
     image: ${CRON_IMAGE:-mwd-storer-mwd-storer-cron:latest}
@@ -129,11 +136,44 @@ services:
       - ltms_resource:/opt/ltms-client/resource
     tmpfs:
       - /tmp/tmpfs:size=64m,mode=1777
-    networks: [appnet]
+    # cron jobs may call other instances; join meshnet for cross-instance DNS.
+    networks: [appnet, meshnet]
+
+  # Optional instance-level gateway.
+  # Purpose: allow other instances to reach this instance using ONLY the instance name
+  # (e.g. http://retriever:80 , mqtt://storer:1883) without needing per-container DNS.
+  # It joins BOTH networks:
+  # - appnet: reaches local services by service name (rest/mq)
+  # - meshnet: exposes the instance name (${DEMO_NAME}) to other instances
+  gateway:
+    image: ${GATEWAY_IMAGE:-haproxy:2.9-alpine}
+    restart: unless-stopped
+    depends_on:
+      - rest
+      - mq
+    volumes:
+      - type: bind
+        source: ${INSTANCE_DIR}/gateway/haproxy.cfg
+        target: /usr/local/etc/haproxy/haproxy.cfg
+        read_only: true
+    networks:
+      appnet: {}
+      meshnet:
+        aliases:
+          - ${DEMO_NAME}
 
 networks:
+  # Per-instance network (internal wiring). Keep this per instance to avoid name collisions.
   appnet:
-    driver: bridge
+    name: ${APPNET_NAME:-${DEMO_NAME}_appnet}
+    external: ${APPNET_EXTERNAL:-false}
+
+  # Shared network (cross-instance). Only the gateway joins this network.
+  # Create once if using external=true:
+  #   docker network create demo-mesh
+  meshnet:
+    name: ${MESHNET_NAME:-demo-mesh}
+    external: ${MESHNET_EXTERNAL:-false}
 
 volumes:
   db:
