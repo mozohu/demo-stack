@@ -11,7 +11,13 @@ services:
       - ../gui:/usr/share/nginx/html/demo:ro
     networks:
       - frontend
+      - meshnet
 
 networks:
   frontend:
     driver: bridge
+
+  # Shared cross-instance network (must match demo-stack meshnet)
+  meshnet:
+    name: ${MESHNET_NAME:-demo-mesh}
+    external: true
