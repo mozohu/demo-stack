@@ -19,5 +19,19 @@
     "rest_port": 13001,
     "mqtt_port": 13003,
     "mqtt_ws_port": 13004
+  },
+  "storer-ng": {
+    "hid": "02:42:ac:22:00:02",
+    "tz": "Asia/Taipei",
+    "rest_port": 12201,
+    "mqtt_port": 12203,
+    "mqtt_ws_port": 12204
+  },
+  "retriever-ng": {
+    "hid": "02:42:ac:23:00:08",
+    "tz": "Asia/Taipei",
+    "rest_port": 12301,
+    "mqtt_port": 12303,
+    "mqtt_ws_port": 12304
   }
 }

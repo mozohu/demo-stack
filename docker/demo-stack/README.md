@@ -49,6 +49,22 @@ gateway 設定：`instances/<name>/gateway/haproxy.cfg`
 
 ## 快速開始
 
+### 事前準備：AWS credentials（mw/rest/cron 需要）
+本專案 **不會把 AWS credential bake 進 image**。需要在執行時掛載到容器內 `/root/.aws`。
+
+預設位置（每個 instance 各自一份）：
+- host: `${INSTANCE_DIR}/aws/credentials`
+- host: `${INSTANCE_DIR}/aws/config`
+
+你也可以在 `instances/<name>/.env` 裡指定：
+- `AWS_CRED_DIR=/path/to/aws-dir`（則會掛載該目錄到容器 `/root/.aws`）
+
+權限建議：
+```bash
+chmod 700 ${INSTANCE_DIR}/aws
+chmod 600 ${INSTANCE_DIR}/aws/credentials ${INSTANCE_DIR}/aws/config
+```
+
 ### 啟動單一 instance
 ```bash
 ./scripts/up.sh storer
@@ -108,6 +124,37 @@ GUI 是靜態 web app，不在每個 instance 內啟動 GUI container。
 有些 GUI（例如 `temple`）在瀏覽器裡會直接請求 `http(s)://<same-origin>/media/...`。
 
 frontend 會根據 `Referer: /demo/<app>/...` 推斷 app，並把 `/media/...` proxy 到 `http://<app>/media/...`（走 meshnet 的 instance gateway）。
+
+---
+
+## Image build（安全版本：內建 awscli、且不含 /root/.aws）
+
+本 repo 內的 `images/{mw,rest,cron}/Dockerfile` 會安裝：
+- `liblogger-syslog-perl`
+- AWS CLI v2
+
+但由於上游 base image 可能曾經含有 `/root/.aws`，只用 `RUN rm -rf` 不安全。
+本專案採取「flatten」做法確保 secrets 不存在於任何 layer。
+
+建置腳本：
+```bash
+# storer 版
+./scripts/build_secure_images.sh
+
+# retriever 版
+./scripts/build_secure_images.sh --variant retriever
+```
+
+產物：
+- `demo-stack/mw:clean`, `demo-stack/rest:clean`, `demo-stack/cron:clean`
+- `demo-stack/mw-retriever:clean`, `demo-stack/rest-retriever:clean`, `demo-stack/cron-retriever:clean`
+
+建完後把 `instances/<name>/.env` 內的 `MW_IMAGE/REST_IMAGE/CRON_IMAGE` 指到 `*:clean`。
+
+---
+
+## 部署到另一台主機（從 Docker Hub 拉 clean images）
+請看：`DEPLOY-NEW-HOST.md`
 
 ---
 

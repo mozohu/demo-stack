@@ -48,6 +48,11 @@ services:
     depends_on:
       - smc
     volumes:
+      # AWS credentials (runtime overlay; do NOT bake into images)
+      - type: bind
+        source: ${AWS_CRED_DIR:-${INSTANCE_DIR}/aws}
+        target: /root/.aws
+        read_only: true
       - type: bind
         source: ${INSTANCE_DIR}/smc/smc_config.js
         target: /etc/smc_config.js
@@ -83,6 +88,11 @@ services:
     ports:
       - "${REST_PORT:-8080}:80"
     volumes:
+      # AWS credentials (runtime overlay; do NOT bake into images)
+      - type: bind
+        source: ${AWS_CRED_DIR:-${INSTANCE_DIR}/aws}
+        target: /root/.aws
+        read_only: true
       - type: bind
         source: ${INSTANCE_DIR}/smc/smc_config.js
         target: /etc/smc_config.js
@@ -109,6 +119,11 @@ services:
     depends_on:
       - mw
     volumes:
+      # AWS credentials (runtime overlay; do NOT bake into images)
+      - type: bind
+        source: ${AWS_CRED_DIR:-${INSTANCE_DIR}/aws}
+        target: /root/.aws
+        read_only: true
       - type: bind
         source: ${INSTANCE_DIR}/smc/smc_config.js
         target: /etc/smc_config.js
