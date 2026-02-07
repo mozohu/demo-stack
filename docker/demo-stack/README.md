@@ -1,5 +1,39 @@
 # demo-stack
 
+## Image profiles (local vs prod)
+
+Each instance keeps runtime settings in `instances/<name>/.env`.
+Image tags are split out by environment:
+
+- `instances/<name>/.images.local.env`  → local development (images built/tagged on this host)
+- `instances/<name>/.images.prod.env`   → deployment (images pullable from registry)
+
+Scripts support `--profile local|prod` (default: `local`).
+
+### Push clean images to Docker Hub
+
+```bash
+# Build clean images locally first (if needed)
+./scripts/build_secure_images.sh
+./scripts/build_secure_images.sh --variant retriever
+
+# Push to Docker Hub (includes SMC clean + retriever SMC clean)
+./scripts/push_clean_images_dockerhub.sh
+
+# Or push only SMC:
+./scripts/push_clean_images_dockerhub.sh --only smc
+./scripts/push_clean_images_dockerhub.sh --only smc-retriever
+```
+
+
+```bash
+./scripts/up.sh storer --profile local
+./scripts/up.sh storer --profile prod
+
+./scripts/system_up.sh mwd-pickup --profile prod
+./scripts/system_ps.sh mwd-pickup --profile prod
+```
+
 ## HID generation (per-host + per-instance)
 
 Each instance has a `HID` in `instances/<name>/.env`.

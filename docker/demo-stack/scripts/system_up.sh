@@ -4,8 +4,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 usage() {
-  echo "Usage: $0 <system>" >&2
+  echo "Usage: $0 <system> [--profile local|prod]" >&2
   echo "Example: $0 mwd-pickup" >&2
+  echo "Example: $0 mwd-pickup --profile prod" >&2
 }
 
 if [[ $# -lt 1 ]]; then
@@ -14,6 +15,17 @@ if [[ $# -lt 1 ]]; then
 fi
 
 system="$1"
+shift || true
+
+profile="${IMAGES_PROFILE:-local}"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --profile) profile="${2:-}"; shift 2;;
+    -h|--help) usage; exit 0;;
+    *) echo "Unknown arg: $1" >&2; usage; exit 2;;
+  esac
+done
+
 sysdir="systems/${system}"
 listfile="${sysdir}/instances.txt"
 sysenv="${sysdir}/system.env"
@@ -73,10 +85,18 @@ while IFS= read -r instance; do
     exit 3
   fi
 
-  merged=".tmp/system-env/${system}.${instance}.env"
-  # Merge env (system overrides instance on duplicate keys)
+  imgenv="instances/${instance}/.images.${profile}.env"
+  if [[ ! -f "$imgenv" ]]; then
+    echo "Missing images env file: $imgenv" >&2
+    exit 4
+  fi
+
+  merged=".tmp/system-env/${system}.${instance}.${profile}.env"
+  # Merge env (later overrides earlier): instance + images + system
   {
     cat "$instenv"
+    echo
+    cat "$imgenv"
     echo
     cat "$sysenv"
   } >"$merged"
