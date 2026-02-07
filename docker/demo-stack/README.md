@@ -8,9 +8,11 @@ If you want deterministic, automatically generated HIDs (different across hosts)
 
 ```bash
 cd docker/demo-stack
-./scripts/apply_hid_envs.sh            # apply to all instances
+./scripts/apply_hid_envs.sh            # apply to all instances (keep existing HID)
 # or
 ./scripts/apply_hid_envs.sh storer temple
+
+./scripts/apply_hid_envs.sh --force    # overwrite existing HID values
 ```
 
 Algorithm: `sha256("<hostname>:<instanceName>")` → `02:<first 5 bytes>`.
