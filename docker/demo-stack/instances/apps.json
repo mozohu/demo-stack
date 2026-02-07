@@ -1,37 +1,4 @@
 {
-  "storer": {
-    "hid": "02:42:ac:1c:00:02",
-    "tz": "Asia/Taipei",
-    "rest_port": 12001,
-    "mqtt_port": 12003,
-    "mqtt_ws_port": 12004
-  },
-  "retriever": {
-    "hid": "02:42:ac:1e:00:08",
-    "tz": "Asia/Taipei",
-    "rest_port": 12101,
-    "mqtt_port": 12103,
-    "mqtt_ws_port": 12104
-  },
-  "temple": {
-    "hid": "02:42:ac:1d:00:01",
-    "tz": "Asia/Taipei",
-    "rest_port": 13001,
-    "mqtt_port": 13003,
-    "mqtt_ws_port": 13004
-  },
-  "storer-ng": {
-    "hid": "02:42:ac:22:00:02",
-    "tz": "Asia/Taipei",
-    "rest_port": 12201,
-    "mqtt_port": 12203,
-    "mqtt_ws_port": 12204
-  },
-  "retriever-ng": {
-    "hid": "02:42:ac:23:00:08",
-    "tz": "Asia/Taipei",
-    "rest_port": 12301,
-    "mqtt_port": 12303,
-    "mqtt_ws_port": 12304
-  }
+  "_deprecated": true,
+  "note": "apps.json is no longer the source of truth. Use instances/<name>/.env and ./instances/scripts/ports.py (scans instances/)."
 }
