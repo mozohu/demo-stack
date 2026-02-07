@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build demo-stack derived images (mw/rest/cron) with:
-# - Logger::Syslog
-# - AWS CLI v2
+# Build demo-stack derived images (mw/rest/cron/smc) with:
+# - Logger::Syslog (mw/rest/cron)
+# - AWS CLI v2 (all)
+# Then sanitize (flatten) to ensure /root/.aws is NOT present in any layer.
 # Then sanitize (flatten) to ensure /root/.aws is NOT present in any layer.
 #
 # Outputs tags:
@@ -24,12 +25,15 @@ cd "$(dirname "$0")/.."
 usage() {
   cat >&2 <<'EOF'
 Usage:
-  build_secure_images.sh [--variant storer|retriever] [--mw-base IMG] [--rest-base IMG] [--cron-base IMG] [--awscli-version VER]
+  build_secure_images.sh [--variant storer|retriever] \
+    [--mw-base IMG] [--rest-base IMG] [--cron-base IMG] [--smc-base IMG] \
+    [--awscli-version VER]
 
 Defaults:
   --mw-base   mwd-storer-mwd-storer-mw:latest
   --rest-base mwd-storer-mwd-storer-rest:latest
   --cron-base mwd-storer-mwd-storer-cron:latest
+  --smc-base  mwd-storer-mwd-storer-smc:latest
   --awscli-version 2.17.57
 
 What it does:
@@ -44,6 +48,7 @@ variant="storer"
 mw_base="mwd-storer-mwd-storer-mw:latest"
 rest_base="mwd-storer-mwd-storer-rest:latest"
 cron_base="mwd-storer-mwd-storer-cron:latest"
+smc_base="mwd-storer-mwd-storer-smc:latest"
 awscli_version="2.17.57"
 
 while [[ $# -gt 0 ]]; do
@@ -52,6 +57,7 @@ while [[ $# -gt 0 ]]; do
     --mw-base) mw_base="${2:-}"; shift 2;;
     --rest-base) rest_base="${2:-}"; shift 2;;
     --cron-base) cron_base="${2:-}"; shift 2;;
+    --smc-base) smc_base="${2:-}"; shift 2;;
     --awscli-version) awscli_version="${2:-}"; shift 2;;
     -h|--help) usage; exit 0;;
     *) echo "Unknown arg: $1" >&2; usage; exit 2;;
@@ -63,6 +69,7 @@ if [[ "$variant" == "retriever" ]]; then
   if [[ "$mw_base" == "mwd-storer-mwd-storer-mw:latest" ]]; then mw_base="mwd-retriever-mwd-retriever-mw:latest"; fi
   if [[ "$rest_base" == "mwd-storer-mwd-storer-rest:latest" ]]; then rest_base="mwd-retriever-mwd-retriever-rest:latest"; fi
   if [[ "$cron_base" == "mwd-storer-mwd-storer-cron:latest" ]]; then cron_base="mwd-retriever-mwd-retriever-cron:latest"; fi
+  if [[ "$smc_base" == "mwd-storer-mwd-storer-smc:latest" ]]; then smc_base="mwd-retriever-mwd-retriever-smc:latest"; fi
 elif [[ "$variant" != "storer" ]]; then
   echo "Unknown --variant: $variant (use storer|retriever)" >&2
   exit 2
@@ -100,9 +107,11 @@ if [[ "$variant" == "retriever" ]]; then
   build_one mw   "$mw_base"   demo-stack/mw-retriever:tmp-secure   demo-stack/mw-retriever:clean
   build_one rest "$rest_base" demo-stack/rest-retriever:tmp-secure demo-stack/rest-retriever:clean
   build_one cron "$cron_base" demo-stack/cron-retriever:tmp-secure demo-stack/cron-retriever:clean
+  build_one smc  "$smc_base"  demo-stack/smc-retriever:tmp-secure  demo-stack/smc-retriever:clean
 
   echo "==> DONE"
   echo "Set in your instance envs:"
+  echo "  SMC_IMAGE=demo-stack/smc-retriever:clean"
   echo "  MW_IMAGE=demo-stack/mw-retriever:clean"
   echo "  REST_IMAGE=demo-stack/rest-retriever:clean"
   echo "  CRON_IMAGE=demo-stack/cron-retriever:clean"
@@ -110,9 +119,11 @@ else
   build_one mw   "$mw_base"   demo-stack/mw:tmp-secure   demo-stack/mw:clean
   build_one rest "$rest_base" demo-stack/rest:tmp-secure demo-stack/rest:clean
   build_one cron "$cron_base" demo-stack/cron:tmp-secure demo-stack/cron:clean
+  build_one smc  "$smc_base"  demo-stack/smc:tmp-secure  demo-stack/smc:clean
 
   echo "==> DONE"
   echo "Set in your instance envs:"
+  echo "  SMC_IMAGE=demo-stack/smc:clean"
   echo "  MW_IMAGE=demo-stack/mw:clean"
   echo "  REST_IMAGE=demo-stack/rest:clean"
   echo "  CRON_IMAGE=demo-stack/cron:clean"

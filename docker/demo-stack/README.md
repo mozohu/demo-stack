@@ -1,5 +1,21 @@
 # demo-stack
 
+## HID generation (per-host + per-instance)
+
+Each instance has a `HID` in `instances/<name>/.env`.
+
+If you want deterministic, automatically generated HIDs (different across hosts), use:
+
+```bash
+cd docker/demo-stack
+./scripts/apply_hid_envs.sh            # apply to all instances
+# or
+./scripts/apply_hid_envs.sh storer temple
+```
+
+Algorithm: `sha256("<hostname>:<instanceName>")` → `02:<first 5 bytes>`.
+
+
 目標：在同一台 demo 機器上同時啟動多套 demo（storer / retriever / temple...），每套 demo 都有自己獨立的一組：
 - REST API port（HTTP）
 - MQTT port（TCP）
