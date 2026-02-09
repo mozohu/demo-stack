@@ -115,9 +115,9 @@ services:
         read_only: true
     # REST may call other instances; join meshnet for cross-instance DNS.
     networks: [appnet, meshnet]
-    # Create ebus socket symlink for shared access
+    # Create ebus socket symlink for shared access (updated for new ebus architecture)
     command: >
-      sh -c "ln -sf /run/ebus/ebus.sock /var/lib/ebus.sock 2>/dev/null;
+      sh -c "ln -sf /run/ebus/ebus.localhost.sock /var/lib/ebus.sock 2>/dev/null;
       spawn-fcgi -s /var/run/fcgiwrap.socket -M 766 /usr/sbin/fcgiwrap &&
       nginx -g 'daemon off;'"
 
@@ -166,9 +166,9 @@ services:
       - /tmp/tmpfs:size=64m,mode=1777
     # cron jobs may call other instances; join meshnet for cross-instance DNS.
     networks: [appnet, meshnet]
-    # Create ebus socket symlink for shared access
+    # Create ebus socket symlink for shared access (updated for new ebus architecture)
     command: >
-      sh -c "ln -sf /run/ebus/ebus.sock /var/lib/ebus.sock 2>/dev/null;
+      sh -c "ln -sf /run/ebus/ebus.localhost.sock /var/lib/ebus.sock 2>/dev/null;
       exec /usr/local/bin/supercronic /app/crontab"
 
   # Optional instance-level gateway.
