@@ -10,6 +10,13 @@ Image tags are split out by environment:
 
 Scripts support `--profile local|prod` (default: `local`).
 
+### Pull clean images (on a new host)
+
+```bash
+# Pull all demo-stack clean images from Docker Hub (including SMC)
+./scripts/pull_clean_images_dockerhub.sh
+```
+
 ### Push clean images to Docker Hub
 
 ```bash
@@ -68,9 +75,9 @@ GUI 由一個共享的 `frontend` nginx 提供（單一入口）。
 每個 demo instance 都是：**同一個 compose 模板 + 各自一份 env**。
 
 - `compose.yml`：通用模板（mq/smc/mw/rest/cron/gateway）
-- `instances/<name>/.env`：此 demo 的 ports、image tag、instance 目錄、（可選）meshnet 設定
+- `instances/<name>/.env`：此 demo 的 ports、HID、instance 目錄、（可選）meshnet 設定
 - `instances/<name>/{mq,smc,rest,cron,mw,gateway}/...`：此 demo 的設定檔
-- `instances/apps.json`：各 app 對應 HID / ports 的集中對照表
+- `instances/<name>/.images.local.env` / `.images.prod.env`：image tag（開發/佈署切換）
 
 ### Networks（很重要）
 
@@ -119,9 +126,11 @@ chmod 600 ${INSTANCE_DIR}/aws/credentials ${INSTANCE_DIR}/aws/config
 
 ### 啟動單一 instance
 ```bash
-./scripts/up.sh storer
-./scripts/up.sh retriever
-./scripts/up.sh temple
+# local（本機 build/tag 的 demo-stack/*）
+./scripts/up.sh storer --profile local
+
+# prod（Docker Hub mozohu/*）
+./scripts/up.sh storer --profile prod
 ```
 
 ### 停止單一 instance
@@ -144,10 +153,10 @@ chmod 600 ${INSTANCE_DIR}/aws/credentials ${INSTANCE_DIR}/aws/config
   - `systems/<system>/instances.txt`
   - `systems/<system>/system.env`
 
-- 啟動/停止/狀態：
+- 啟動/停止/狀態（建議新主機用 prod profile）：
 ```bash
-./scripts/system_up.sh mwd-pickup
-./scripts/system_ps.sh mwd-pickup
+./scripts/system_up.sh mwd-pickup --profile prod
+./scripts/system_ps.sh mwd-pickup --profile prod
 ./scripts/system_down.sh mwd-pickup
 ```
 
@@ -222,7 +231,7 @@ frontend 會根據 `Referer: /demo/<app>/...` 推斷 app，並把 `/media/...` p
 - `./scripts/mesh_check.sh --system mwd-pickup`：檢查哪些容器有加入 meshnet
 - `./scripts/mqtt_listen.sh storer --topic '#'
 `：用 `mosquitto_sub` 聆聽某 instance 的 MQTT topic（含時間戳/instance 欄位）
-- `./scripts/ports.py list|get|set ...`：管理 `instances/apps.json`（ports/hid 對照表）
+- `./scripts/ports.py [--status]`：掃描 `instances/*/.env`，列出 HID/ports（可附容器狀態）
 
 ---
 

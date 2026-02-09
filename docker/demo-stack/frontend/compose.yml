@@ -6,6 +6,8 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-8088}:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ../gui:/usr/share/nginx/html/demo:ro

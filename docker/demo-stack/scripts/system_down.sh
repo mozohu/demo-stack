@@ -29,19 +29,17 @@ fi
 
 mkdir -p .tmp/system-env
 
-# After stopping, reset config.5 to a no-op so the same instances can be run solo.
+# After stopping, clear mesh-related keys in config.5 but preserve other settings.
 reset_config5() {
   local instance="$1"
   local cfg="instances/${instance}/mw/config.5"
-  mkdir -p "$(dirname "$cfg")"
-  cat >"$cfg" <<'EOF'
-# /root/config.5 (overlay)
-# This file is bind-mounted into the MW container.
-# Put system-specific overrides here (e.g. meshnet peer hosts/ports).
-# Leave empty for default behavior.
-
-1;
-EOF
+  [[ -f "$cfg" ]] || return 0
+  
+  # Only clear the 4 mesh-related keys, preserve everything else
+  local keys=(MASTER_EBUS MASTER_IP RETRIEVER_EBUS RETRIEVER_IP)
+  for key in "${keys[@]}"; do
+    sed -i "/^${key}=/d" "$cfg"
+  done
 }
 
 while IFS= read -r instance; do

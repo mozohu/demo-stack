@@ -1,28 +1,19 @@
-# Deploy demo-stack on a new host (Docker Hub images)
+# Deploy demo-stack on a new host (prod profile)
 
-This runbook deploys demo-stack from GitHub and pulls the prebuilt **clean** images from Docker Hub.
+This runbook is written so another AI agent (or human) can bring up the **mwd-pickup** system on a fresh host quickly and correctly.
 
-Target system example: **mwd-pickup**.
+Key idea: instance runtime settings live in `instances/<name>/.env`, but **image tags are selected by profile**:
 
-## What you get
-- Multiple demo instances on one host (e.g. `storer`, `retriever`, `temple`, plus `*-ng` variants)
-- MW/REST/CRON containers use **runtime AWS credentials** mounted to `/root/.aws` (read-only)
-- MW/REST/CRON images include **AWS CLI v2**
-- MW/REST/CRON images are **flattened** and do **NOT** contain `/root/.aws` in any layer
+- `--profile local` → uses `instances/<name>/.images.local.env` (local-only tags like `demo-stack/...`)
+- `--profile prod`  → uses `instances/<name>/.images.prod.env`  (pullable tags like `mozohu/...`)
 
-## Images used (Docker Hub)
-These are the published clean images under user `mozohu`:
+On a new host you almost always want **prod**.
 
-- `mozohu/demo-stack-mw:clean`
-- `mozohu/demo-stack-rest:clean`
-- `mozohu/demo-stack-cron:clean`
-- `mozohu/demo-stack-mw-retriever:clean`
-- `mozohu/demo-stack-rest-retriever:clean`
-- `mozohu/demo-stack-cron-retriever:clean`
+---
 
-## 0) Prereqs on the new host
+## 0) Prereqs
 1. Docker Engine + Compose v2 installed
-2. You can run without sudo (or prefix commands with sudo)
+2. Host can pull from Docker Hub (or is logged in if you later make repos private)
 
 Verify:
 ```bash
@@ -30,128 +21,108 @@ docker --version
 docker compose version
 ```
 
+---
+
 ## 1) Clone repo
 ```bash
 git clone <GITHUB_REPO_URL> demo-stack
-cd demo-stack
+cd demo-stack/docker/demo-stack
 ```
 
-## 2) Create mesh network (recommended)
-Many demo setups rely on a shared mesh network named `demo-mesh`.
+---
 
+## 2) Mesh network setup (demo-mesh)
+`mwd-pickup` uses cross-instance DNS by instance name (storer/retriever), so you want a shared mesh network.
+
+The system file already sets:
+- `MESHNET_NAME=demo-mesh`
+- `MESHNET_EXTERNAL=true`
+
+Create it once:
 ```bash
 docker network create demo-mesh || true
 ```
 
-## 3) Update instance envs to use Docker Hub images
-Edit these files:
-- `instances/storer/.env`
-- `instances/storer-ng/.env`
-- `instances/temple/.env`
-- `instances/retriever/.env`
-- `instances/retriever-ng/.env`
+---
 
-### storer / storer-ng / temple
-Set:
-```env
-MW_IMAGE=mozohu/demo-stack-mw:clean
-REST_IMAGE=mozohu/demo-stack-rest:clean
-CRON_IMAGE=mozohu/demo-stack-cron:clean
-```
+## 3) Apply/confirm HID per host
+HID is stored in `instances/<name>/.env`.
 
-### retriever / retriever-ng
-Set:
-```env
-MW_IMAGE=mozohu/demo-stack-mw-retriever:clean
-REST_IMAGE=mozohu/demo-stack-rest-retriever:clean
-CRON_IMAGE=mozohu/demo-stack-cron-retriever:clean
-```
-
-Also ensure meshnet settings are consistent. Recommended in each instance env:
-```env
-MESHNET_NAME=demo-mesh
-MESHNET_EXTERNAL=true
-```
-
-## 4) Prepare AWS credentials (runtime mount)
-MW/REST/CRON mount `${AWS_CRED_DIR:-${INSTANCE_DIR}/aws}` into container `/root/.aws`.
-
-### Option A (default): per-instance directory under INSTANCE_DIR
-For each instance (storer, retriever, temple, storer-ng, retriever-ng), create:
-
+If you want deterministic HID per-host+per-instance (recommended), run:
 ```bash
-mkdir -p instances/<name>/aws
-# Put these files:
-#   instances/<name>/aws/credentials
-#   instances/<name>/aws/config
-chmod 700 instances/<name>/aws
-chmod 600 instances/<name>/aws/credentials instances/<name>/aws/config
+./scripts/apply_hid_envs.sh
 ```
 
-### Option B (centralized): use AWS_CRED_DIR in the instance .env
-Example:
-```env
-AWS_CRED_DIR=/secure/aws-creds/storer
-```
-Then put `credentials` and `config` under that directory.
+- It will **keep existing HID** if already set.
+- Use `--force` only if you intentionally want to overwrite.
 
-## 5) Pull images (optional but recommended)
+---
+
+## 4) Pull required clean images (Docker Hub)
+All prod images are under Docker Hub namespace `mozohu`.
+
+Pull everything needed for storer+retriever systems (includes SMC):
 ```bash
-docker pull mozohu/demo-stack-mw:clean
-docker pull mozohu/demo-stack-rest:clean
-docker pull mozohu/demo-stack-cron:clean
-docker pull mozohu/demo-stack-mw-retriever:clean
-docker pull mozohu/demo-stack-rest-retriever:clean
-docker pull mozohu/demo-stack-cron-retriever:clean
+./scripts/pull_clean_images_dockerhub.sh
 ```
 
-## 6) Deploy a system: mwd-pickup
-The system definition lives in:
-- `systems/mwd-pickup/instances.txt`
-- `systems/mwd-pickup/system.env`
+(Equivalent to pulling these repos with tag `:clean`:
+`demo-stack-{mw,rest,cron,smc}` and `demo-stack-{mw,rest,cron,smc}-retriever`.)
 
-Start it:
+---
+
+## 5) Prepare AWS credentials (runtime mount)
+MW/REST/CRON mount `${AWS_CRED_DIR:-${INSTANCE_DIR}/aws}` into container `/root/.aws` (read-only).
+
+Default: per-instance directory under each instance dir:
 ```bash
-./scripts/system_up.sh mwd-pickup
+for i in storer retriever; do
+  mkdir -p "instances/${i}/aws"
+  # Put:
+  #   instances/${i}/aws/credentials
+  #   instances/${i}/aws/config
+  chmod 700 "instances/${i}/aws"
+  chmod 600 "instances/${i}/aws/credentials" "instances/${i}/aws/config"
+done
+```
+
+---
+
+## 6) Bring up the system (mwd-pickup)
+Start:
+```bash
+./scripts/system_up.sh mwd-pickup --profile prod
 ```
 
 Check status:
 ```bash
-./scripts/system_ps.sh mwd-pickup
+./scripts/system_ps.sh mwd-pickup --profile prod
 ```
 
-## 7) Verify AWS access inside containers
-Run in MW/REST/CRON (pick at least one from each instance):
+Stop:
 ```bash
-docker exec -it storer-mw-1 sh -lc 'aws --version && aws sts get-caller-identity'
-docker exec -it retriever-mw-1 sh -lc 'aws --version && aws sts get-caller-identity'
+./scripts/system_down.sh mwd-pickup
 ```
-
-## 8) Common issues
-### "demo-mesh exists but was not created by compose" warning
-Set in env:
-```env
-MESHNET_NAME=demo-mesh
-MESHNET_EXTERNAL=true
-```
-And ensure the network exists:
-```bash
-docker network create demo-mesh || true
-```
-
-### Ports conflict
-Each instance must use unique `REST_PORT`, `MQTT_PORT`, `MQTT_WS_PORT`.
 
 ---
 
-## Appendix: Stop / restart
-Stop a system:
+## 7) Quick verification
+- Ports are published per instance (from `instances/<name>/.env`):
 ```bash
-./scripts/system_down.sh mwd-pickup
+./scripts/ports.py --status
 ```
 
-Restart:
+- AWS CLI available (inside mw):
 ```bash
-./scripts/system_down.sh mwd-pickup
-./scripts/system_up.sh mwd-pickup
+docker exec -it storer-mw-1 sh -lc 'aws --version'
+```
+
+---
+
+## Common failure: "pull access denied for demo-stack/..."
+Cause: you used `--profile local` (or no profile) on a fresh host, so it tries to pull `demo-stack/...` which is a local-only tag.
+
+Fix:
+```bash
+./scripts/system_up.sh mwd-pickup --profile prod
 ```
