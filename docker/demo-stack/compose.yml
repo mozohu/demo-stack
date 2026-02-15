@@ -67,21 +67,23 @@ services:
         source: ${INSTANCE_DIR}/mw/config.5
         target: /root/config.5
         read_only: true
-      # Modified start.pl that starts ebus.pl first (for ng instances)
       - type: bind
-        source: ${INSTANCE_DIR}/mw/start.pl
-        target: /opt/app/scripts/start.pl
+        source: ${INSTANCE_DIR}/mw/config.6
+        target: /root/config.6
         read_only: true
       - log:/var/lib/ivm/log
       - db:/opt/svm/rest/db
       - ivm_var:/var/lib/ivm
       - ivm_opt:/opt/ivm
       - ltms_resource:/opt/ltms-client/resource
-      - ebus_run:/run/ebus
+      - ebus_run:/var/run/ebus
     tmpfs:
       - /tmp/tmpfs:size=64m,mode=1777
     # MW must join meshnet to resolve cross-instance hostnames (e.g. MASTER_IP=storer).
     networks: [appnet, meshnet]
+    command: >
+      sh -c "chmod +x /usr/share/perl5/ebus.pl 2>/dev/null;
+      exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf"
 
   rest:
     image: ${REST_IMAGE:-mwd-storer-mwd-storer-rest:latest}
@@ -108,7 +110,7 @@ services:
       - ivm_var:/var/lib/ivm
       - ivm_opt:/opt/ivm
       - ltms_resource:/opt/ltms-client/resource
-      - ebus_run:/run/ebus
+      - ebus_run:/var/run/ebus
       - type: bind
         source: ${INSTANCE_DIR}/rest/nginx-rest.conf
         target: /etc/nginx/sites-available/default
@@ -117,7 +119,8 @@ services:
     networks: [appnet, meshnet]
     # Create ebus socket symlink for shared access (updated for new ebus architecture)
     command: >
-      sh -c "ln -sf /run/ebus/ebus.localhost.sock /var/lib/ebus.sock 2>/dev/null;
+      sh -c "chmod +x /usr/share/perl5/ebus.pl 2>/dev/null;
+      ln -sf /var/run/ebus/ebus.localhost.sock /var/lib/ebus.sock 2>/dev/null;
       spawn-fcgi -s /var/run/fcgiwrap.socket -M 766 /usr/sbin/fcgiwrap &&
       nginx -g 'daemon off;'"
 
@@ -161,14 +164,15 @@ services:
       - ivm_var:/var/lib/ivm
       - ivm_opt:/opt/ivm
       - ltms_resource:/opt/ltms-client/resource
-      - ebus_run:/run/ebus
+      - ebus_run:/var/run/ebus
     tmpfs:
       - /tmp/tmpfs:size=64m,mode=1777
     # cron jobs may call other instances; join meshnet for cross-instance DNS.
     networks: [appnet, meshnet]
     # Create ebus socket symlink for shared access (updated for new ebus architecture)
     command: >
-      sh -c "ln -sf /run/ebus/ebus.localhost.sock /var/lib/ebus.sock 2>/dev/null;
+      sh -c "chmod +x /usr/share/perl5/ebus.pl 2>/dev/null;
+      ln -sf /var/run/ebus/ebus.localhost.sock /var/lib/ebus.sock 2>/dev/null;
       exec /usr/local/bin/supercronic /app/crontab"
 
   # Optional instance-level gateway.

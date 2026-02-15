@@ -1,0 +1,5 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY debs/*.deb /tmp/
+RUN dpkg -i /tmp/ivm-smc_*.deb /tmp/ivm-scripts_*.deb /tmp/libivm-perl_*.deb || apt-get -f install -y && \
+    rm -f /tmp/*.deb
