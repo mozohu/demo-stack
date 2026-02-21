@@ -111,6 +111,15 @@ services:
       - ivm_opt:/opt/ivm
       - ltms_resource:/opt/ltms-client/resource
       - ebus_run:/var/run/ebus
+      # Instance overlay config (same as mw): /root/config.5
+      - type: bind
+        source: ${INSTANCE_DIR}/mw/config.5
+        target: /root/config.5
+        read_only: true
+      - type: bind
+        source: ${INSTANCE_DIR}/mw/config.6
+        target: /root/config.6
+        read_only: true
       - type: bind
         source: ${INSTANCE_DIR}/rest/nginx-rest.conf
         target: /etc/nginx/sites-available/default
