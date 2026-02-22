@@ -23,3 +23,30 @@ RUN set -eux; \
     rm -rf /tmp/aws /tmp/awscliv2.zip; \
     apt-get purge -y --auto-remove curl unzip; \
     rm -rf /var/lib/apt/lists/*
+
+
+# Fix Tbl_Product.p_id: INTEGER → TEXT (SVM.ng requires TEXT p_id)
+RUN sqlite3 /opt/svm/rest/db/sqlite.db " \
+    CREATE TABLE IF NOT EXISTS Tbl_Product_new ( \
+      p_id TEXT, c_id INTEGER, p_name TEXT, barcode TEXT, \
+      imagepath TEXT, dmpath TEXT, price INTEGER, description TEXT, \
+      spec TEXT, p_property TEXT, remove BOOLEAN, updatetime INTEGER, \
+      PRIMARY KEY (p_id), \
+      FOREIGN KEY (c_id) REFERENCES Tbl_Category (c_id) ON DELETE CASCADE ON UPDATE CASCADE \
+    ); \
+    INSERT INTO Tbl_Product_new SELECT * FROM Tbl_Product; \
+    DROP TABLE Tbl_Product; \
+    ALTER TABLE Tbl_Product_new RENAME TO Tbl_Product; \
+    " && \
+    sqlite3 /opt/app/scripts/test/svm_sqlite/sqlite.db " \
+    CREATE TABLE IF NOT EXISTS Tbl_Product_new ( \
+      p_id TEXT, c_id INTEGER, p_name TEXT, barcode TEXT, \
+      imagepath TEXT, dmpath TEXT, price INTEGER, description TEXT, \
+      spec TEXT, p_property TEXT, remove BOOLEAN, updatetime INTEGER, \
+      PRIMARY KEY (p_id), \
+      FOREIGN KEY (c_id) REFERENCES Tbl_Category (c_id) ON DELETE CASCADE ON UPDATE CASCADE \
+    ); \
+    INSERT INTO Tbl_Product_new SELECT * FROM Tbl_Product; \
+    DROP TABLE Tbl_Product; \
+    ALTER TABLE Tbl_Product_new RENAME TO Tbl_Product; \
+    "

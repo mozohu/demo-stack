@@ -1,0 +1,16 @@
+{
+  "name": "demo-stack-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for demo-stack instance management",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "demo-stack-mcp": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  }
+}
